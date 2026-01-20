@@ -10,11 +10,7 @@ import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 import LoginModal from './components/LoginModal';
 import AdminDashboard from './components/AdminDashboard';
-import { auth, db } from './lib/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, onSnapshot, query, orderBy, doc } from 'firebase/firestore';
-
-
+import { supabase } from './lib/supabase';
 
 const DEFAULT_SETTINGS: SiteSettings = {
   logoUrl: "/logo-new.png",
@@ -29,15 +25,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   facebookUrl: "https://www.facebook.com/joseevilanio"
 };
 
-const DEFAULT_PORTFOLIO: PortfolioItem[] = [
-  {
-    id: '1',
-    title: 'Resort Alagoas',
-    category: 'Casamento',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCV-rbO1s5Xf7hNktrULdgrP2hfOvSjJhJwtkm6lX3W5bSoJpDjdkKHU9toz57XlwKah5QAaBY0EiLj69qhVKCUDi1xt71bvSeIlGO8J5T-g-HcL-pCu3Bv-rqjxhDVzoy9Nw7EiZ-jd1nSDGAV0JURi3_WVaDR88IG2591DgQL8CUKGwtZ4-lvzqZbZf-A6W1Ye295yJKdKe0GQHvRbQ62HaiLRK1lAHBy3U1uIqiYQZR85e1cvN2sJxWrfDhcLx_x0NXQ9Wt1s38',
-    videoUrl: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
-  }
-];
+const DEFAULT_PORTFOLIO: PortfolioItem[] = [];
 
 const App: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -52,50 +40,113 @@ const App: React.FC = () => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
 
-    // Firebase Auth Observer
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      setIsLoggedIn(!!user);
+    // Supabase Auth Observer
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
       setLoading(false);
     });
 
-    // Firestore Portfolio Listener with Error Handling
-    const q = query(collection(db, 'portfolio'), orderBy('createdAt', 'desc'));
-    const unsubscribeFirestore = onSnapshot(q,
-      (snapshot) => {
-        const items = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as PortfolioItem[];
-
-        setPortfolioItems(items.length > 0 ? items : DEFAULT_PORTFOLIO);
-      },
-      (error) => {
-        console.error("Firestore Permission Error: Verifique suas regras de segurança.", error);
-        // Fallback para itens padrão se houver erro de permissão
-        setPortfolioItems(DEFAULT_PORTFOLIO);
-      }
-    );
-
-    // Firestore Settings Listener
-    const unsubscribeSettings = onSnapshot(doc(db, 'settings', 'site_settings'), (doc) => {
-      if (doc.exists()) {
-        setSettings(prev => ({ ...prev, ...doc.data() }));
-      }
-    }, (error) => {
-      console.error("Erro ao carregar configurações do site:", error);
+    const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
     });
+
+    // Supabase Realtime Portfolio Listener
+    const fetchPortfolio = async () => {
+      const { data, error } = await supabase
+        .from('portfolio')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching portfolio:', error);
+      } else {
+        // Map snake_case from DB to camelCase for App
+        const mappedData = data?.map((item: any) => ({
+          ...item,
+          videoUrl: item.video_url ?? item.videourl ?? ""
+        })) || [];
+        setPortfolioItems(mappedData);
+      }
+    };
+
+    fetchPortfolio();
+
+    const portfolioSubscription = supabase
+      .channel('portfolio_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'portfolio',
+        },
+        () => {
+          fetchPortfolio();
+        }
+      )
+      .subscribe();
+
+
+    // Supabase Settings Listener
+    const fetchSettings = async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('id', 'site_settings')
+        .maybeSingle();
+
+      if (data) {
+        setSettings(prev => ({ ...prev, ...data }));
+      } else if (!data && !error) {
+        // Init settings if empty
+        console.log("Settings not found, initializing...");
+        const { error: insertError } = await supabase
+          .from('settings')
+          .upsert([{
+            id: 'site_settings',
+            logo_url: DEFAULT_SETTINGS.logoUrl,
+            hero_background: DEFAULT_SETTINGS.heroBackground,
+            hero_title: DEFAULT_SETTINGS.heroTitle,
+            hero_subtitle: DEFAULT_SETTINGS.heroSubtitle,
+            whatsapp_number: DEFAULT_SETTINGS.whatsappNumber,
+            phone_display: DEFAULT_SETTINGS.phoneDisplay,
+            email: DEFAULT_SETTINGS.email,
+            location: DEFAULT_SETTINGS.location,
+            instagram_url: DEFAULT_SETTINGS.instagramUrl,
+            facebook_url: DEFAULT_SETTINGS.facebookUrl
+          }], { onConflict: 'id' });
+
+        if (insertError) console.error("Error creating default settings:", insertError);
+        else setSettings(DEFAULT_SETTINGS);
+      }
+
+      if (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+
+    fetchSettings();
+
+    const settingsSubscription = supabase
+      .channel('settings_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'settings' },
+        () => fetchSettings()
+      )
+      .subscribe();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      unsubscribeAuth();
-      unsubscribeFirestore();
-      unsubscribeSettings();
+      authListener.unsubscribe();
+      supabase.removeChannel(portfolioSubscription);
+      supabase.removeChannel(settingsSubscription);
     };
   }, []);
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await supabase.auth.signOut();
       setShowDashboard(false);
     } catch (error) {
       console.error("Erro ao sair:", error);

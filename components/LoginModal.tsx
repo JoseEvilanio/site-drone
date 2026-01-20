@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { auth } from '../lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { supabase } from '../lib/supabase';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -19,11 +18,18 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
       onClose();
     } catch (err: any) {
       console.error(err);
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      if (err.message === 'Invalid login credentials') {
         setError('E-mail ou senha incorretos.');
       } else {
         setError('Ocorreu um erro ao tentar entrar. Tente novamente.');
@@ -40,7 +46,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
         <button onClick={onClose} className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors">
           <span className="material-symbols-outlined">close</span>
         </button>
-        
+
         <div className="text-center mb-10">
           <span className="material-symbols-outlined text-primary text-5xl mb-4">lock_person</span>
           <h2 className="font-display text-3xl text-white">Área Restrita</h2>
@@ -50,8 +56,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-zinc-400 text-xs uppercase tracking-widest mb-2">E-mail</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-zinc-950 border-zinc-800 focus:border-primary focus:ring-primary rounded-xl p-4 text-white transition-all outline-none"
@@ -61,8 +67,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
           </div>
           <div>
             <label className="block text-zinc-400 text-xs uppercase tracking-widest mb-2">Senha</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-zinc-950 border-zinc-800 focus:border-primary focus:ring-primary rounded-xl p-4 text-white transition-all outline-none"
@@ -77,7 +83,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
             </div>
           )}
 
-          <button 
+          <button
             type="submit"
             disabled={loading}
             className="w-full bg-primary text-black font-bold py-4 rounded-xl uppercase tracking-widest hover:bg-white transition-all shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
