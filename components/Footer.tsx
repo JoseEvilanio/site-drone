@@ -48,34 +48,61 @@ const Footer: React.FC<FooterProps> = ({ settings }) => {
           <Reveal delay={300}>
             <div className="bg-zinc-900/50 p-8 md:p-10 rounded-2xl border border-zinc-800 backdrop-blur-md">
               <h3 className="text-2xl font-display mb-8">Envie uma Mensagem</h3>
-              <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+              <form
+                className="space-y-6"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+                  const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+                  const subject = (form.elements.namedItem('subject') as HTMLInputElement).value;
+                  const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value;
+
+                  const whatsappMsg = `Olá José! Recebi um contato pelo site.
+                  
+👤 *Nome:* ${name}
+📧 *E-mail:* ${email}
+📝 *Assunto:* ${subject}
+💬 *Mensagem:* ${message}`;
+
+                  window.open(`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
+                }}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <input
-                    className="w-full bg-zinc-950 border-zinc-800 focus:border-primary focus:ring-primary rounded-lg p-4 text-white transition-colors"
+                    name="name"
+                    required
+                    className="w-full bg-zinc-950 border-zinc-800 focus:border-primary focus:ring-primary rounded-lg p-4 text-white transition-colors outline-none"
                     placeholder="Nome Completo"
                     type="text"
                   />
                   <input
-                    className="w-full bg-zinc-950 border-zinc-800 focus:border-primary focus:ring-primary rounded-lg p-4 text-white transition-colors"
+                    name="email"
+                    required
+                    className="w-full bg-zinc-950 border-zinc-800 focus:border-primary focus:ring-primary rounded-lg p-4 text-white transition-colors outline-none"
                     placeholder="E-mail"
                     type="email"
                   />
                 </div>
                 <input
-                  className="w-full bg-zinc-950 border-zinc-800 focus:border-primary focus:ring-primary rounded-lg p-4 text-white transition-colors"
-                  placeholder="Assunto (Ex: Casamento)"
+                  name="subject"
+                  required
+                  className="w-full bg-zinc-950 border-zinc-800 focus:border-primary focus:ring-primary rounded-lg p-4 text-white transition-colors outline-none"
+                  placeholder="Assunto (Ex: Dúvida sobre Pacotes)"
                   type="text"
                 />
                 <textarea
-                  className="w-full bg-zinc-950 border-zinc-800 focus:border-primary focus:ring-primary rounded-lg p-4 text-white transition-colors resize-none"
-                  placeholder="Detalhes do seu evento"
+                  name="message"
+                  required
+                  className="w-full bg-zinc-950 border-zinc-800 focus:border-primary focus:ring-primary rounded-lg p-4 text-white transition-colors resize-none outline-none"
+                  placeholder="Como posso te ajudar?"
                   rows={4}
                 ></textarea>
                 <button
                   type="submit"
                   className="w-full bg-primary text-black font-bold py-4 rounded-lg uppercase tracking-widest hover:bg-white transition-all shadow-xl active:scale-[0.98]"
                 >
-                  Enviar Mensagem
+                  Enviar via WhatsApp
                 </button>
               </form>
             </div>

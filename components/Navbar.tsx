@@ -37,6 +37,7 @@ const Navbar: React.FC<NavbarProps> = ({ scrolled, isLoggedIn, onLoginClick, onD
           <button onClick={() => scrollTo('home')} className="text-primary hover:text-white transition-colors">Início</button>
           <button onClick={() => scrollTo('servicos')} className="text-slate-300 hover:text-primary transition-colors">Serviços</button>
           <button onClick={() => scrollTo('portfolio')} className="text-slate-300 hover:text-primary transition-colors">Portfólio</button>
+          <button onClick={() => scrollTo('orcamento')} className="text-slate-300 hover:text-primary transition-colors">Orçamento</button>
           <button onClick={() => scrollTo('contato')} className="text-slate-300 hover:text-primary transition-colors">Contato</button>
         </nav>
 
@@ -68,14 +69,12 @@ const Navbar: React.FC<NavbarProps> = ({ scrolled, isLoggedIn, onLoginClick, onD
             </button>
           )}
 
-          <a
-            href={`https://wa.me/${settings.whatsappNumber}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => scrollTo('orcamento')}
             className="bg-primary text-black px-5 py-2 md:px-8 md:py-2.5 rounded text-[10px] md:text-xs font-bold uppercase tracking-widest hover:bg-white transition-all shadow-lg active:scale-95"
           >
             Orçamento
-          </a>
+          </button>
         </div>
       </div>
     </header>

@@ -10,6 +10,7 @@ import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 import LoginModal from './components/LoginModal';
 import AdminDashboard from './components/AdminDashboard';
+import Quote from './components/Quote';
 import { supabase } from './lib/supabase';
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -173,6 +174,7 @@ const App: React.FC = () => {
         <Services />
         <Portfolio items={portfolioItems} />
         <Testimonials />
+        <Quote whatsappNumber={settings.whatsappNumber} />
       </main>
       <Footer settings={settings} />
       <WhatsAppButton phoneNumber={settings.whatsappNumber} />
