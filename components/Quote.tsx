@@ -15,6 +15,56 @@ const Quote: React.FC<QuoteProps> = ({ whatsappNumber }) => {
         objective: ''
     });
 
+    const [expandedPackage, setExpandedPackage] = useState<number | null>(null);
+
+    const PACKAGES = [
+        {
+            id: 1,
+            title: "Pacote Inicial",
+            subtitle: "Entrada Profissional",
+            icon: "flight_takeoff",
+            description: "Ideal para pequenas comemorações que precisam de um toque aéreo cinematográfico.",
+            accent: "Essencial & Qualidade",
+            details: [
+                "Até 30 minutos de voo",
+                "Fotos aéreas em alta resolução",
+                "Vídeo bruto (sem edição)",
+                "Entrega via Google Drive"
+            ]
+        },
+        {
+            id: 2,
+            title: "Pacote Profissional",
+            subtitle: "Cobertura Completa",
+            icon: "auto_awesome",
+            description: "A escolha certa para quem busca impacto visual e uma narrativa completa do seu evento.",
+            accent: "Entrega Premium & Edição",
+            recommended: true,
+            details: [
+                "Até 60 minutos de voo",
+                "Fotos aéreas ilimitadas",
+                "Vídeo editado (Highlights 1-3 min)",
+                "Trilha sonora licenciada",
+                "Entrega em 48 horas"
+            ]
+        },
+        {
+            id: 3,
+            title: "Pacote Completo",
+            subtitle: "Experiência VIP",
+            icon: "diamond",
+            description: "Produção de alto nível com múltiplos voos e entrega de conteúdo pronto para todas as mídias.",
+            accent: "Máximo Impacto & Exclusividade",
+            details: [
+                "Voos ilimitados (conforme necessidade)",
+                "Cobertura completa do evento",
+                "Vídeo longo + Reels/Shorts",
+                "Color grading cinematográfico",
+                "Prioridade na edição"
+            ]
+        }
+    ];
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -36,6 +86,16 @@ Aguardo seu contato para conversarmos mais sobre o projeto!`;
 
         const encodedMessage = encodeURIComponent(message);
         window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank');
+    };
+
+    const scrollToForm = (packageTitle?: string) => {
+        const form = document.getElementById('contato-form');
+        if (form) {
+            form.scrollIntoView({ behavior: 'smooth' });
+            if (packageTitle) {
+                setFormData(prev => ({ ...prev, objective: `Interesse no ${packageTitle}. ` + prev.objective }));
+            }
+        }
     };
 
     return (
@@ -120,58 +180,73 @@ Aguardo seu contato para conversarmos mais sobre o projeto!`;
                     <div className="space-y-6">
                         <Reveal delay={300}>
                             <div className="grid gap-6">
-                                {/* Package 1 */}
-                                <div className="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-primary/50 transition-all group">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <h4 className="text-xl font-bold text-slate-900 dark:text-white">Pacote Inicial</h4>
-                                            <p className="text-slate-500 dark:text-slate-400 text-sm">Entrada Profissional</p>
+                                {PACKAGES.map((pkg) => (
+                                    <div
+                                        key={pkg.id}
+                                        className={`p-6 rounded-2xl bg-white dark:bg-slate-800 border-2 transition-all duration-500 overflow-hidden cursor-pointer group relative ${pkg.recommended ? 'border-primary shadow-lg scale-[1.02]' : 'border-slate-100 dark:border-slate-700 hover:border-primary/50'
+                                            }`}
+                                        onClick={() => setExpandedPackage(expandedPackage === pkg.id ? null : pkg.id)}
+                                    >
+                                        {pkg.recommended && (
+                                            <div className="absolute top-0 right-0 bg-primary text-black text-[10px] font-bold px-4 py-1 uppercase rounded-bl-lg">
+                                                Mais Recomendado
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h4 className="text-xl font-bold text-slate-900 dark:text-white">{pkg.title}</h4>
+                                                <p className="text-slate-500 dark:text-slate-400 text-sm">{pkg.subtitle}</p>
+                                            </div>
+                                            <span className={`material-symbols-outlined transition-colors duration-300 ${pkg.recommended ? 'text-primary' : 'text-slate-400 group-hover:text-primary'}`}>
+                                                {pkg.icon}
+                                            </span>
                                         </div>
-                                        <span className="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">flight_takeoff</span>
-                                    </div>
-                                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
-                                        Ideal para pequenas comemorações que precisam de um toque aéreo cinematográfico.
-                                    </p>
-                                    <div className="text-primary font-bold text-sm uppercase tracking-wider">Essencial & Qualidade</div>
-                                </div>
+                                        <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
+                                            {pkg.description}
+                                        </p>
 
-                                {/* Package 2 */}
-                                <div className="p-6 rounded-2xl bg-white dark:bg-slate-800 border-2 border-primary shadow-lg hover:scale-[1.02] transition-all relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 bg-primary text-black text-[10px] font-bold px-4 py-1 uppercase rounded-bl-lg">
-                                        Mais Recomendado
-                                    </div>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <h4 className="text-xl font-bold text-slate-900 dark:text-white">Pacote Profissional</h4>
-                                            <p className="text-slate-500 dark:text-slate-400 text-sm">Cobertura Completa</p>
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-primary font-bold text-[10px] uppercase tracking-wider">{pkg.accent}</div>
+                                            <div className="flex items-center text-primary text-[10px] font-bold uppercase tracking-widest transition-transform duration-300">
+                                                {expandedPackage === pkg.id ? 'Ver menos' : 'Ver detalhes'}
+                                                <span className={`material-symbols-outlined text-sm ml-1 transition-transform duration-300 ${expandedPackage === pkg.id ? 'rotate-180' : ''}`}>
+                                                    expand_more
+                                                </span>
+                                            </div>
                                         </div>
-                                        <span className="material-symbols-outlined text-primary">auto_awesome</span>
-                                    </div>
-                                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
-                                        A escolha certa para quem busca impacto visual e uma narrativa completa do seu evento.
-                                    </p>
-                                    <div className="text-primary font-bold text-sm uppercase tracking-wider">Entrega Premium & Edição</div>
-                                </div>
 
-                                {/* Package 3 */}
-                                <div className="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-primary/50 transition-all group">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <h4 className="text-xl font-bold text-slate-900 dark:text-white">Pacote Completo</h4>
-                                            <p className="text-slate-500 dark:text-slate-400 text-sm">Experiência VIP</p>
+                                        <div
+                                            className={`grid transition-all duration-500 ease-in-out ${expandedPackage === pkg.id ? 'grid-rows-[1fr] opacity-100 mt-6' : 'grid-rows-[0fr] opacity-0'
+                                                }`}
+                                        >
+                                            <div className="overflow-hidden">
+                                                <div className="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">O que está incluso:</p>
+                                                    {pkg.details.map((detail, idx) => (
+                                                        <div key={idx} className="flex items-center text-xs text-slate-600 dark:text-slate-400">
+                                                            <span className="material-symbols-outlined text-primary text-sm mr-2">check_circle</span>
+                                                            {detail}
+                                                        </div>
+                                                    ))}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            scrollToForm(pkg.title);
+                                                        }}
+                                                        className="w-full mt-4 py-3 bg-primary/10 hover:bg-primary text-primary hover:text-black font-bold rounded-xl transition-all uppercase tracking-widest text-[10px] border border-primary/20"
+                                                    >
+                                                        Escolher este Pacote
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <span className="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">diamond</span>
                                     </div>
-                                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
-                                        Produção de alto nível com múltiplos voos e entrega de conteúdo pronto para todas as mídias.
-                                    </p>
-                                    <div className="text-primary font-bold text-sm uppercase tracking-wider">Máximo Impacto & Exclusividade</div>
-                                </div>
+                                ))}
                             </div>
                         </Reveal>
 
                         <Reveal delay={700}>
-                            <div className="mt-8 p-8 bg-slate-900 text-white rounded-3xl relative overflow-hidden">
+                            <div id="contato-form" className="mt-8 p-8 bg-slate-900 text-white rounded-3xl relative overflow-hidden ring-1 ring-white/10 shadow-2xl">
                                 <div className="relative z-10">
                                     <h4 className="text-2xl font-display mb-4">Pronto para decolar?</h4>
                                     <p className="text-slate-300 mb-6 text-sm">

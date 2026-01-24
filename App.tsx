@@ -22,7 +22,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   phoneDisplay: "(82) 99371-6239",
   email: "jose_evilanio@hotmail.com",
   location: "Maceió - Alagoas, Brasil",
-  instagramUrl: "https://www.instagram.com/jose_evilanio/",
+  instagramUrl: "https://www.instagram.com/neto.araujo520125/",
   facebookUrl: "https://www.facebook.com/joseevilanio"
 };
 
